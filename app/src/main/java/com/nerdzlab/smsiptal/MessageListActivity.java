@@ -1,0 +1,441 @@
+package com.nerdzlab.smsiptal;
+
+
+import android.content.Context;
+import android.content.Intent;
+
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.provider.Telephony;
+import android.support.annotation.NonNull;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Bundle;
+import android.provider.Telephony.Sms.Inbox;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.LoaderManager.LoaderCallbacks;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
+
+
+
+import com.nerdzlab.smsiptal.models.Message;
+import com.nerdzlab.smsiptal.utils.GetCursorTask;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import me.everything.providers.android.telephony.Sms;
+import me.everything.providers.android.telephony.TelephonyProvider;
+import me.everything.providers.core.Data;
+
+import static android.icu.lang.UCharacter.GraphemeClusterBreak.T;
+import static com.nerdzlab.smsiptal.models.Message.ITEMMAP;
+
+/**
+ * An activity representing a list of Messages. This activity
+ * has different presentations for handset and tablet-size devices. On
+ * handsets, the activity presents a list of items, which when touched,
+ * lead to a {@link MessageDetailActivity} representing
+ * item details. On tablets, the activity presents the list of items and
+ * item details side-by-side using two vertical panes.
+ */
+public class MessageListActivity extends AppCompatActivity implements  LoaderCallbacks<Cursor> {
+
+    private static final String TAG = "MessageListActivity";
+    public static final String COLUMN_ID = "_id";
+    public static final String COLUMN_THREAD_ID = "thread_id";
+    public static final String COLUMN_ADDRESS = "address";
+    public static final String COLUMN_PERSON = "person";
+    public static final String COLUMN_DATE = "date";
+    public static final String COLUMN_DATE_SENT = "date_sent";
+    public static final String COLUMN_PROTOCOL = "protocol";
+    public static final String COLUMN_READ = "read";
+    public static final String COLUMN_STATUS = "status";
+    public static final String COLUMN_TYPE = "type";
+    public static final String COLUMN_REPLY_PATH_PRESENT = "reply_path_present";
+    public static final String COLUMN_SUBJECT = "subject";
+    public static final String COLUMN_BODY = "body";
+    public static final String COLUMN_SERVICE_CENTER = "service_center";
+    public static final String COLUMN_LOCKED = "locked";
+    public static final String COLUMN_ERROR_CODE = "error_code";
+    public static final String COLUMN_SEEN = "seen";
+    public static final String COLUMN_TIMED = "timed";
+    public static final String COLUMN_DELETED = "deleted";
+    public static final String COLUMN_SYNC_STATE = "sync_state";
+    public static final String COLUMN_MARKER = "marker";
+    public static final String COLUMN_SOURCE = "source";
+    public static final String COLUMN_BIND_ID = "bind_id";
+    public static final String COLUMN_MX_STATUS = "mx_status";
+    public static final String COLUMN_MX_ID = "mx_id";
+    public static final String COLUMN_OUT_TIME = "out_time";
+    public static final String COLUMN_ACCOUNT = "account";
+    public static final String COLUMN_SIM_ID = "sim_id";
+    public static final String COLUMN_BLOCK_TYPE = "block_type";
+    public static final String COLUMN_ADVANCED_SEEN = "advanced_seen";
+    public static final String COLUMN_B2C_TTL = "b2c_ttl";
+    public static final String COLUMN_B2C_NUMBERS = "b2c_numbers";
+    public static final String COLUMN_FAKE_CELL_TYPE = "fake_cell_type";
+    public static final String COLUMN_URL_RISKY_TYPE = "url_risky_type";
+    /**
+     * Whether or not the activity is in two-pane mode, i.e. running on a tablet
+     * device.
+     */
+    private boolean mTwoPane;
+    private ArrayList<Message> mData = new ArrayList<>();
+    private SimpleItemRecyclerViewAdapter mAdapter;
+
+    /*public Data<Sms> getSMSData()
+    {
+        TelephonyProvider provider = new TelephonyProvider(getApplicationContext());
+        return provider.getSms(TelephonyProvider.Filter.INBOX);
+    }
+
+    private void displaySmsLog() {
+        Uri allMessages = Uri.parse("content://sms/inbox");
+        //Cursor cursor = managedQuery(allMessages, null, null, null, null); Both are same
+        Cursor cursor = this.getContentResolver().query(allMessages, null,
+                null, null, null);
+
+        while (cursor.moveToNext()) {
+            *//*for (int i = 0; i < cursor.getColumnCount(); i++) {
+
+
+            }*//*
+            if(isSpam(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BODY))));
+            {
+                Log.d( " TEST ",  "--"+cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BODY)));
+                Message msg = new Message();
+                msg.setAdress(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_ADDRESS)));
+                msg.setBody(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BODY)));
+
+
+                mData.add(msg);
+                ITEMMAP.put(msg.getAdress(),msg);
+
+                mAdapter.notifyDataSetChanged();
+
+
+            }
+
+        }
+        cursor.close();
+
+    }*/
+
+
+    public Boolean isSpam(String body){
+
+        Pattern pattern = Pattern.compile("(\\d{16})");
+        Matcher matcher = pattern.matcher(body);
+        String val = "";
+        if (matcher.find()) {
+            System.out.println("MATCH FOUND: "+matcher.group(0));
+            return true;
+        }
+        else
+            return false;
+
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_message_list);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        toolbar.setTitle(getTitle());
+
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+            }
+        });
+
+
+        /*// Defines a list of columns to retrieve from the Cursor and load into an output row
+        String[] mWordListColumns =
+        {
+            UserDictionary.Words.WORD,   // Contract class constant containing the word column name
+            UserDictionary.Words.LOCALE  // Contract class constant containing the locale column name
+        };
+
+// Defines a list of View IDs that will receive the Cursor columns for each row
+        int[] mWordListItems = { R.id.dictWord, R.id.locale};
+
+// Creates a new SimpleCursorAdapter
+        mCursorAdapter = new SimpleCursorAdapter(
+                getApplicationContext(),               // The application's Context object
+                R.layout.wordlistrow,                  // A layout in XML for one row in the ListView
+                mCursor,                               // The result from the query
+                mWordListColumns,                      // A string array of column names in the cursor
+                mWordListItems,                        // An integer array of view IDs in the row layout
+                0);                                    // Flags (usually none are needed)
+
+// Sets the adapter for the ListView
+        mWordList.setAdapter(mCursorAdapter);*/
+
+
+        //Log.d(TAG, "onCreate: "+getSMSData().getList().size());
+
+        /*for (Sms data : getSMSData().getList())
+        {
+            Message msg = new Message();
+            msg.setAdress(data.address);
+            msg.setBody(data.body);
+            msg.setRead(data.read);
+            msg.setSeen(data.seen);
+            msg.setReceivedDate(data.receivedDate);
+            msg.setSentDate(data.sentDate);
+            msg.setSubject(data.subject);
+
+            mData.add(msg);
+            ITEMMAP.put(data.address,msg);
+            *//*if(isSpam(data.body))
+            {
+                Message msg = new Message();
+                msg.setAdress(data.address);
+                msg.setBody(data.body);
+                msg.setRead(data.read);
+                msg.setSeen(data.seen);
+                msg.setReceivedDate(data.receivedDate);
+                msg.setSentDate(data.sentDate);
+                msg.setSubject(data.subject);
+
+                mData.add(msg);
+                ITEMMAP.put(data.address,msg);
+
+            }*//*
+
+
+
+
+
+        }*/
+
+        View recyclerView = findViewById(R.id.message_list);
+        assert recyclerView != null;
+        setupRecyclerView((RecyclerView) recyclerView);
+
+        if (findViewById(R.id.message_detail_container) != null) {
+            // The detail container view will be present only in the
+            // large-screen layouts (res/values-w900dp).
+            // If this view is present, then the
+            // activity should be in two-pane mode.
+            mTwoPane = true;
+        }
+    }
+
+    private void setupRecyclerView(@NonNull RecyclerView recyclerView) {
+        mAdapter = new SimpleItemRecyclerViewAdapter(mData);
+        recyclerView.setAdapter(mAdapter);
+        //displaySmsLog();
+
+        /*GetSMSInboxTask smstask = new GetSMSInboxTask();
+        smstask.execute();*/
+
+        // Simple query to show the most recent SMS messages in the inbox
+        getSupportLoaderManager().initLoader(SmsQuery.TOKEN, null, this);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+        if (i == SmsQuery.TOKEN) {
+            // This will fetch all SMS messages in the inbox, ordered by date desc
+            CursorLoader mcl = new CursorLoader(this, SmsQuery.CONTENT_URI, SmsQuery.PROJECTION,
+                    null, null, SmsQuery.SORT_ORDER);
+
+            return mcl;
+        }
+        return null;
+    }
+    @Override
+    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+        if (cursorLoader.getId() == SmsQuery.TOKEN && cursor != null) {
+            // Standard swap cursor in when load is done
+
+            while (cursor.moveToNext()) {
+
+                String body = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BODY));
+
+                if(isSpam(body) )
+                {
+
+                    Message msg = new Message();
+                    msg.setAdress(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_ADDRESS)));
+                    msg.setBody(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BODY)));
+
+
+                    mData.add(msg);
+                    ITEMMAP.put(msg.getAdress(),msg);
+
+
+
+
+                }
+
+            }
+            mAdapter.notifyDataSetChanged();
+
+        }
+    }
+    @Override
+    public void onLoaderReset(Loader<Cursor> cursorLoader) {
+        // Standard swap cursor to null when loader is reset
+
+    }
+
+
+
+
+    public class SimpleItemRecyclerViewAdapter
+            extends RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder> {
+
+        private final ArrayList<Message> mValues;
+
+        public SimpleItemRecyclerViewAdapter(ArrayList<Message> items) {
+            mValues = items;
+        }
+
+        @Override
+        public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.message_list_content, parent, false);
+            return new ViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(final ViewHolder holder, int position) {
+            holder.mItem = mValues.get(position);
+            holder.mIdView.setText(mValues.get(position).getAdress());
+            holder.mContentView.setText(mValues.get(position).getBody());
+
+            holder.mView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (mTwoPane) {
+                        Bundle arguments = new Bundle();
+                        arguments.putString(MessageDetailFragment.ARG_ITEM_ID, holder.mItem.getAdress());
+                        MessageDetailFragment fragment = new MessageDetailFragment();
+                        fragment.setArguments(arguments);
+                        getSupportFragmentManager().beginTransaction()
+                                .replace(R.id.message_detail_container, fragment)
+                                .commit();
+                    } else {
+                        Context context = v.getContext();
+                        Intent intent = new Intent(context, MessageDetailActivity.class);
+                        intent.putExtra(MessageDetailFragment.ARG_ITEM_ID, holder.mItem.getAdress());
+
+                        context.startActivity(intent);
+                    }
+                }
+            });
+        }
+
+        @Override
+        public int getItemCount() {
+            return mValues.size();
+        }
+
+        public class ViewHolder extends RecyclerView.ViewHolder {
+            public final View mView;
+            public final TextView mIdView;
+            public final TextView mContentView;
+            public Message mItem;
+
+            public ViewHolder(View view) {
+                super(view);
+                mView = view;
+                mIdView = (TextView) view.findViewById(R.id.id);
+                mContentView = (TextView) view.findViewById(R.id.content);
+            }
+
+            @Override
+            public String toString() {
+                return super.toString() + " '" + mContentView.getText() + "'";
+            }
+        }
+    }
+
+    /**
+     * A basic SmsQuery on android.provider.Telephony.Sms.Inbox
+     */
+    private interface SmsQuery {
+        int TOKEN = 1;
+        static final Uri CONTENT_URI = Telephony.Sms.Inbox.CONTENT_URI;
+        static final String[] PROJECTION = {
+                Telephony.Sms.Inbox._ID,
+                Telephony.Sms.Inbox.ADDRESS,
+                Telephony.Sms.Inbox.BODY,
+        };
+        static final String SORT_ORDER = Telephony.Sms.Inbox.DEFAULT_SORT_ORDER;
+        int ID = 0;
+        int ADDRESS = 1;
+        int BODY = 2;
+    }
+
+    public class GetSMSInboxTask extends AsyncTask<Void, Void, Boolean> {
+
+        Uri allMessages = Uri.parse("content://sms/inbox");
+        //Cursor cursor = managedQuery(allMessages, null, null, null, null); Both are same
+        Cursor cursor = MessageListActivity.this.getContentResolver().query(allMessages, null,
+                null, null, null);
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            Log.d(TAG, "Attempting to get SMSes...");
+
+
+
+            while (cursor.moveToNext()) {
+
+                String body = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BODY));
+
+                if(isSpam(body) )
+                {
+
+                    Message msg = new Message();
+                    msg.setAdress(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_ADDRESS)));
+                    msg.setBody(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BODY)));
+
+
+                    mData.add(msg);
+                    ITEMMAP.put(msg.getAdress(),msg);
+
+
+
+
+                }
+
+            }
+
+            return true;
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean success) {
+            Log.d(TAG, "notify data set changed");
+            mAdapter.notifyDataSetChanged();
+
+            cursor.close();
+
+
+        }
+    }
+}
