@@ -339,5 +339,5 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
         int ADDRESS = 1;
         int BODY = 2;
     }
-    
+
 }

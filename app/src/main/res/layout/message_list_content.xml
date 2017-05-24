@@ -20,5 +20,7 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/text_margin"
         android:layout_marginRight="@dimen/text_margin"
+        android:ellipsize="end"
+        android:maxLines="2"
         android:textAppearance="?attr/textAppearancePopupMenuHeader" />
 </LinearLayout>
