@@ -28,18 +28,24 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 
 
-
+import com.koushikdutta.async.future.FutureCallback;
+import com.koushikdutta.ion.Ion;
+import com.nerdzlab.smsiptal.models.GroupedMessage;
 import com.nerdzlab.smsiptal.models.Message;
 import com.nerdzlab.smsiptal.utils.GetCursorTask;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import me.everything.providers.android.telephony.Sms;
-import me.everything.providers.android.telephony.TelephonyProvider;
-import me.everything.providers.core.Data;
 
 import static android.icu.lang.UCharacter.GraphemeClusterBreak.T;
 import static com.nerdzlab.smsiptal.models.Message.ITEMMAP;
@@ -96,6 +102,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
     private boolean mTwoPane;
     private ArrayList<Message> mData = new ArrayList<>();
     private SimpleItemRecyclerViewAdapter mAdapter;
+    private LinkedHashMap<String,GroupedMessage> GROUPEDITEMMAP = new LinkedHashMap<>();
 
     /*public Data<Sms> getSMSData()
     {
@@ -193,7 +200,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
     }
 
     private void setupRecyclerView(@NonNull RecyclerView recyclerView) {
-        mAdapter = new SimpleItemRecyclerViewAdapter(mData);
+        mAdapter = new SimpleItemRecyclerViewAdapter(GROUPEDITEMMAP);
         recyclerView.setAdapter(mAdapter);
         //displaySmsLog();
 
@@ -230,10 +237,29 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
                     Message msg = new Message();
                     msg.setAdress(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_ADDRESS)));
                     msg.setBody(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BODY)));
+                    msg.setId(cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_ID)));
+
 
 
                     mData.add(msg);
                     ITEMMAP.put(msg.getAdress(),msg);
+
+                    if(GROUPEDITEMMAP.get(msg.getAdress()) != null)
+                    {
+
+                        GROUPEDITEMMAP.get(msg.getAdress()).getMessages().add(msg);
+                    }else {
+                        ArrayList<Message> msglist = new ArrayList<>();
+                        msglist.add(msg);
+
+                        GroupedMessage grmsg = new GroupedMessage();
+                        grmsg.setAdress(msg.getAdress());
+                        grmsg.setMessages(msglist);
+
+
+                        GROUPEDITEMMAP.put(msg.getAdress(),grmsg);
+                    }
+
 
 
 
@@ -257,11 +283,18 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
     public class SimpleItemRecyclerViewAdapter
             extends RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder> {
 
-        private final ArrayList<Message> mValues;
+        private final LinkedHashMap<String, GroupedMessage> mValues;
 
-        public SimpleItemRecyclerViewAdapter(ArrayList<Message> items) {
+        public SimpleItemRecyclerViewAdapter(LinkedHashMap<String, GroupedMessage> items) {
             mValues = items;
         }
+
+        public Object getElementByIndex(LinkedHashMap map,int index){
+            return map.get( (map.keySet().toArray())[ index ] );
+        }
+
+
+
 
         @Override
         public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -272,9 +305,9 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
 
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
-            holder.mItem = mValues.get(position);
-            holder.mIdView.setText(mValues.get(position).getAdress());
-            holder.mContentView.setText(mValues.get(position).getBody());
+            holder.mItem = (GroupedMessage)getElementByIndex(mValues, position);
+            holder.mIdView.setText(holder.mItem.getAdress());
+            holder.mContentView.setText("--"+ holder.mItem.getCount());
 
             holder.mView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -307,7 +340,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
             public final View mView;
             public final TextView mIdView;
             public final TextView mContentView;
-            public Message mItem;
+            public GroupedMessage mItem;
 
             public ViewHolder(View view) {
                 super(view);
