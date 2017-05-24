@@ -178,7 +178,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
         });
 
 
-       
+
         View recyclerView = findViewById(R.id.message_list);
         assert recyclerView != null;
         setupRecyclerView((RecyclerView) recyclerView);
@@ -339,53 +339,5 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
         int ADDRESS = 1;
         int BODY = 2;
     }
-
-    public class GetSMSInboxTask extends AsyncTask<Void, Void, Boolean> {
-
-        Uri allMessages = Uri.parse("content://sms/inbox");
-        //Cursor cursor = managedQuery(allMessages, null, null, null, null); Both are same
-        Cursor cursor = MessageListActivity.this.getContentResolver().query(allMessages, null,
-                null, null, null);
-
-        @Override
-        protected Boolean doInBackground(Void... params) {
-            Log.d(TAG, "Attempting to get SMSes...");
-
-
-
-            while (cursor.moveToNext()) {
-
-                String body = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BODY));
-
-                if(isSpam(body) )
-                {
-
-                    Message msg = new Message();
-                    msg.setAdress(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_ADDRESS)));
-                    msg.setBody(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BODY)));
-
-
-                    mData.add(msg);
-                    ITEMMAP.put(msg.getAdress(),msg);
-
-
-
-
-                }
-
-            }
-
-            return true;
-        }
-
-        @Override
-        protected void onPostExecute(final Boolean success) {
-            Log.d(TAG, "notify data set changed");
-            mAdapter.notifyDataSetChanged();
-
-            cursor.close();
-
-
-        }
-    }
+    
 }
