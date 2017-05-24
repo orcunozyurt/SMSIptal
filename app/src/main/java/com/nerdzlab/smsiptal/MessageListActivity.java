@@ -138,15 +138,24 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
 
     public Boolean isSpam(String body){
 
-        Pattern pattern = Pattern.compile("(\\d{16})");
-        Matcher matcher = pattern.matcher(body);
-        String val = "";
-        if (matcher.find()) {
-            System.out.println("MATCH FOUND: "+matcher.group(0));
+
+        Pattern pattern_mersis = Pattern.compile("(\\d{16})");
+        Pattern pattern_provider = Pattern.compile("[A-Z][0-9]{3,3}");
+        Matcher matcher_mersis = pattern_mersis.matcher(body);
+        Matcher matcher_provider = pattern_provider.matcher(body);
+
+        //Log.d(TAG, "isSpam: "+ matcher_mersis.find()+ " " + matcher_provider.find());
+        if (matcher_mersis.find() && matcher_provider.find()) {
+            System.out.println("MATCH FOUND: "+matcher_mersis.group(0) + " - "+ matcher_provider.group(0));
+            matcher_mersis.reset();
+            matcher_provider.reset();
             return true;
         }
-        else
+        else {
+            matcher_mersis.reset();
+            matcher_provider.reset();
             return false;
+        }
 
     }
 
@@ -169,66 +178,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
         });
 
 
-        /*// Defines a list of columns to retrieve from the Cursor and load into an output row
-        String[] mWordListColumns =
-        {
-            UserDictionary.Words.WORD,   // Contract class constant containing the word column name
-            UserDictionary.Words.LOCALE  // Contract class constant containing the locale column name
-        };
-
-// Defines a list of View IDs that will receive the Cursor columns for each row
-        int[] mWordListItems = { R.id.dictWord, R.id.locale};
-
-// Creates a new SimpleCursorAdapter
-        mCursorAdapter = new SimpleCursorAdapter(
-                getApplicationContext(),               // The application's Context object
-                R.layout.wordlistrow,                  // A layout in XML for one row in the ListView
-                mCursor,                               // The result from the query
-                mWordListColumns,                      // A string array of column names in the cursor
-                mWordListItems,                        // An integer array of view IDs in the row layout
-                0);                                    // Flags (usually none are needed)
-
-// Sets the adapter for the ListView
-        mWordList.setAdapter(mCursorAdapter);*/
-
-
-        //Log.d(TAG, "onCreate: "+getSMSData().getList().size());
-
-        /*for (Sms data : getSMSData().getList())
-        {
-            Message msg = new Message();
-            msg.setAdress(data.address);
-            msg.setBody(data.body);
-            msg.setRead(data.read);
-            msg.setSeen(data.seen);
-            msg.setReceivedDate(data.receivedDate);
-            msg.setSentDate(data.sentDate);
-            msg.setSubject(data.subject);
-
-            mData.add(msg);
-            ITEMMAP.put(data.address,msg);
-            *//*if(isSpam(data.body))
-            {
-                Message msg = new Message();
-                msg.setAdress(data.address);
-                msg.setBody(data.body);
-                msg.setRead(data.read);
-                msg.setSeen(data.seen);
-                msg.setReceivedDate(data.receivedDate);
-                msg.setSentDate(data.sentDate);
-                msg.setSubject(data.subject);
-
-                mData.add(msg);
-                ITEMMAP.put(data.address,msg);
-
-            }*//*
-
-
-
-
-
-        }*/
-
+       
         View recyclerView = findViewById(R.id.message_list);
         assert recyclerView != null;
         setupRecyclerView((RecyclerView) recyclerView);
