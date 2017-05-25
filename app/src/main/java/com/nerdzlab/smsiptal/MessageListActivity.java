@@ -23,7 +23,7 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 
 
-
+import com.github.lzyzsd.circleprogress.DonutProgress;
 import com.nerdzlab.smsiptal.models.GroupedMessage;
 import com.nerdzlab.smsiptal.models.Message;
 
@@ -294,6 +294,15 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
             holder.mItem = (GroupedMessage)getElementByIndex(mValues, position);
             holder.mIdView.setText(holder.mItem.getAdress());
             holder.mContentView.setText("--"+ holder.mItem.getCount());
+            int total = 0;
+
+            for (int i = 0 ; i < mValues.size();i++){
+                GroupedMessage  item = (GroupedMessage)getElementByIndex(mValues, i);
+                total += item.getCount();
+
+            }
+
+            holder.mProgress.setDonut_progress(""+holder.mItem.getCount() * 100 / total);
 
             holder.mView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -327,12 +336,14 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
             public final TextView mIdView;
             public final TextView mContentView;
             public GroupedMessage mItem;
+            public final DonutProgress mProgress;
 
             public ViewHolder(View view) {
                 super(view);
                 mView = view;
                 mIdView = (TextView) view.findViewById(R.id.id);
                 mContentView = (TextView) view.findViewById(R.id.content);
+                mProgress = (DonutProgress) view.findViewById(R.id.donut_progress);
             }
 
             @Override
