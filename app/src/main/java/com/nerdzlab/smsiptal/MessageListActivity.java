@@ -293,7 +293,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
         public void onBindViewHolder(final ViewHolder holder, int position) {
             holder.mItem = (GroupedMessage)getElementByIndex(mValues, position);
             holder.mIdView.setText(holder.mItem.getAdress());
-            holder.mContentView.setText("--"+ holder.mItem.getCount());
+            holder.mContentView.setText(""+ holder.mItem.getCount()+" Adet");
             int total = 0;
 
             for (int i = 0 ; i < mValues.size();i++){
