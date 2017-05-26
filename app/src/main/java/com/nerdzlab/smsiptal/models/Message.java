@@ -11,6 +11,8 @@ import java.util.regex.Pattern;
 
 public class Message {
     public static HashMap<String,Message> ITEMMAP = new HashMap<>();
+
+    private int id;
     private String body;
     private String adress;
     private String type;
@@ -22,7 +24,7 @@ public class Message {
     private Boolean read;
     private Boolean spam;
 
-    public Message(String body, String adress, String type, String serviceCenter, String subject,
+    public Message(int id,String body, String adress, String type, String serviceCenter, String subject,
                    Long sentDate, Long receivedDate, Boolean seen, Boolean read) {
         this.body = body;
         this.adress = adress;
@@ -33,6 +35,7 @@ public class Message {
         this.receivedDate = receivedDate;
         this.seen = seen;
         this.read = read;
+        this.id = id;
     }
 
     public Message() {
@@ -115,5 +118,11 @@ public class Message {
         return spam;
     }
 
+    public int getId() {
+        return id;
+    }
 
+    public void setId(int id) {
+        this.id = id;
+    }
 }

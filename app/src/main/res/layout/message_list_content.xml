@@ -1,26 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
+<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:layout_marginTop="5dp">
 
-    <TextView
-        android:id="@+id/id"
+    <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/text_margin"
-        android:layout_marginLeft="@dimen/text_margin"
-        android:layout_marginRight="@dimen/text_margin"
-        android:textStyle="bold"
-        android:textAppearance="?attr/textAppearancePopupMenuHeader" />
+        android:orientation="horizontal">
 
-    <TextView
-        android:id="@+id/content"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/text_margin"
-        android:layout_marginRight="@dimen/text_margin"
-        android:ellipsize="end"
-        android:maxLines="2"
-        android:textAppearance="?attr/textAppearancePopupMenuHeader" />
-</LinearLayout>
+        <TextView
+            android:id="@+id/id"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/donut_progress"
+            android:layout_margin="@dimen/text_margin"
+            android:textStyle="bold"
+            android:textAppearance="?attr/textAppearancePopupMenuHeader" />
+
+        <TextView
+            android:id="@+id/content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/text_margin"
+            android:layout_alignParentRight="true"
+            android:textAppearance="?attr/textAppearancePopupMenuHeader" />
+
+        <com.github.lzyzsd.circleprogress.DonutProgress
+            android:layout_marginLeft="5dp"
+            android:id="@+id/donut_progress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            custom:donut_progress="30"/>
+    </RelativeLayout>
+
+</android.support.v7.widget.CardView>
