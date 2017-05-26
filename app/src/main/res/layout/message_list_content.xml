@@ -7,7 +7,7 @@
     android:layout_marginTop="5dp">
 
     <RelativeLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
@@ -24,8 +24,9 @@
             android:id="@+id/content"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="@dimen/text_margin"
-            android:layout_alignParentRight="true"
+            android:layout_marginLeft="@dimen/text_margin"
+            android:layout_below="@+id/id"
+            android:layout_toRightOf="@+id/donut_progress"
             android:textAppearance="?attr/textAppearancePopupMenuHeader" />
 
         <com.github.lzyzsd.circleprogress.DonutProgress
@@ -34,6 +35,19 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             custom:donut_progress="0"/>
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:src="@drawable/trashcan"
+            android:layout_marginRight="@dimen/fab_margin"
+            android:layout_centerVertical="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:id="@+id/trashcan" />
+
+
     </RelativeLayout>
 
 </android.support.v7.widget.CardView>

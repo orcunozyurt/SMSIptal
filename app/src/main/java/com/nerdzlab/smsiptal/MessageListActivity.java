@@ -1,6 +1,7 @@
 package com.nerdzlab.smsiptal;
 
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 
@@ -12,9 +13,11 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.database.Cursor;
 import android.net.Uri;
@@ -23,13 +26,28 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.DefaultRetryPolicy;
+import com.android.volley.NetworkResponse;
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.github.lzyzsd.circleprogress.DonutProgress;
+import com.google.gson.Gson;
 import com.nerdzlab.smsiptal.models.GroupedMessage;
 import com.nerdzlab.smsiptal.models.Message;
+import com.nerdzlab.smsiptal.utils.MyApplication;
 
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -86,6 +104,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
      * device.
      */
     private boolean mTwoPane;
+    private  int mStatusCode;
     private ArrayList<Message> mData = new ArrayList<>();
     private SimpleItemRecyclerViewAdapter mAdapter;
     private LinkedHashMap<String,GroupedMessage> GROUPEDITEMMAP = new LinkedHashMap<>();
@@ -133,13 +152,13 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
 
 
         Pattern pattern_mersis = Pattern.compile("(\\d{16})");
-        Pattern pattern_provider = Pattern.compile("[A-Z][0-9]{3,3}");
+        Pattern pattern_provider = Pattern.compile("[A-Z][0-9]{3,3}$");
         Matcher matcher_mersis = pattern_mersis.matcher(body);
         Matcher matcher_provider = pattern_provider.matcher(body);
 
         //Log.d(TAG, "isSpam: "+ matcher_mersis.find()+ " " + matcher_provider.find());
-        if (matcher_mersis.find() && matcher_provider.find()) {
-            System.out.println("MATCH FOUND: "+matcher_mersis.group(0) + " - "+ matcher_provider.group(0));
+        if ((matcher_mersis.find() && matcher_provider.find())|| body.contains("Mersis") ||
+                body.contains("mersis")) {
             matcher_mersis.reset();
             matcher_provider.reset();
             return true;
@@ -324,6 +343,16 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
                     }
                 }
             });
+
+
+            holder.mTrash.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Log.d(TAG, "onClick: ");
+
+                    askBackendDetails(holder.mItem.getAdress(),ITEMMAP.get(holder.mItem.getAdress()).getBody());
+                }
+            });
         }
 
         @Override
@@ -335,6 +364,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
             public final View mView;
             public final TextView mIdView;
             public final TextView mContentView;
+            public final ImageView mTrash;
             public GroupedMessage mItem;
             public final DonutProgress mProgress;
 
@@ -344,6 +374,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
                 mIdView = (TextView) view.findViewById(R.id.id);
                 mContentView = (TextView) view.findViewById(R.id.content);
                 mProgress = (DonutProgress) view.findViewById(R.id.donut_progress);
+                mTrash = (ImageView) view.findViewById(R.id.trashcan);
             }
 
             @Override
@@ -368,6 +399,93 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
         int ID = 0;
         int ADDRESS = 1;
         int BODY = 2;
+    }
+
+
+
+    public void askBackendDetails(String sms_header, String sms_content){
+
+
+
+        JSONObject obj = new JSONObject();
+
+        try {
+            obj.put("sms_header", sms_header);
+            obj.put("sms_content", sms_content);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        String url = getResources().getString(R.string.url) +"/contents/";
+        Log.i("LOGIN","URL: "+url+" req: "+ obj);
+
+        final ProgressDialog pDialog = new ProgressDialog(this);
+        pDialog.setMessage("Yükleniyor...");
+        pDialog.show();
+        JsonObjectRequest loginrequest = new JsonObjectRequest(Request.Method.POST,url,obj,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        System.out.println(response);
+                        pDialog.hide();
+                        pDialog.dismiss();
+
+                        Gson gson = new Gson();
+                        /*Authentication authentication =
+                                gson.fromJson(String.valueOf(response),Authentication.class);*/
+                        Log.i(TAG, response.toString());
+
+
+
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        pDialog.hide();
+                        pDialog.dismiss();
+                        NetworkResponse response = error.networkResponse;
+                        if(response != null && response.data != null){
+                            Log.d(TAG, "onErrorResponse: " + new String(response.data));
+                            //Additional cases
+                        }
+                        VolleyLog.d("RESPONSE", "Error: " + error);
+                        View view = findViewById(android.R.id.content);
+                        Snackbar.make(view, "Bir Hata Oluştu.", Snackbar.LENGTH_LONG)
+                                .setAction("Action", null).show();
+                        //ShowErrorMessage(context);
+
+                        /*MyApplication.getInstance().setAccessToken("");
+
+                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                        startActivity(intent);
+                        finish();*/
+                    }
+                }) {
+            /**
+             * Passing some request headers
+             * */
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<String, String>();
+                headers.put("Content-Type", "application/json");
+                //headers.put("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NTU1NjQ1MzV9.uziTJmdCjxXKi6pLHh3OsSJXmlQyS7Izf7sT-kD3CHU");
+                return headers;
+            }
+            @Override
+            protected Response<JSONObject> parseNetworkResponse(NetworkResponse response) {
+                Log.d("PARSEERROR", " PARSE ERROR" + response.statusCode);
+                mStatusCode = response.statusCode;
+                return super.parseNetworkResponse(response);
+            }
+        };
+        loginrequest.setRetryPolicy(new DefaultRetryPolicy(
+                10000,
+                0,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+
+        // Adding request to request queue
+        MyApplication.getInstance().addToRequestQueue(loginrequest);
+
     }
 
 }
