@@ -3,6 +3,13 @@
     <string name="title_message_detail">Message Detail</string>
 
     <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="url">http://192.168.1.26:8000</string>
+    <string name="agree">Tamam</string>
+    <string name="content_reject">Uygulamanin dogru bir sekilde calisabilmesi icin SMS okuma iznine ihtiyaci var. Izin vermediginiz icin uygulama kampanya SMS lerini bulamiyor :(</string>
+    <string name="reject">Izin Reddedildi</string>
+    <string name="request_perm">Izin Talebi</string>
+    <string name="content_request_perm">Uygulamanin dogru sekilde calisabilmesi icin, gelen kutunuzdaki kampanya SMS lerine ulasmasi gerekli. Kampanya mesajlarini iptal ettikten sonra bu izni istediginiz zaman silebilirsiniz.</string>
+    <string name="trashdesc">Cop kutusuna tikla, ve kampanya iptal mesaji gonderilsin.</string>
+    <string name="okdesc">Bu isareti goruyorsan, bu kampanya onceden iptal edilmis.</string>
+    <string name="spydesc">Merhaba, ben izinsiz sms iptal robotun, simdi</string>
 </resources>

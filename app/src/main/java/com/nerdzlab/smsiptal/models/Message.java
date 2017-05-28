@@ -1,7 +1,10 @@
 package com.nerdzlab.smsiptal.models;
 
+import com.google.firebase.database.Exclude;
+
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -12,34 +15,43 @@ import java.util.regex.Pattern;
 public class Message {
     public static HashMap<String,Message> ITEMMAP = new HashMap<>();
 
-    private int id;
-    private String body;
     private String adress;
-    private String type;
-    private String serviceCenter;
-    private String subject;
-    private Long sentDate;
-    private Long receivedDate;
-    private Boolean seen;
-    private Boolean read;
+    private String body;
+    private String sentDate;
+    private String receivedDate;
     private Boolean spam;
+    private String cancel_number;
+    private String cancel_phrase;
 
-    public Message(int id,String body, String adress, String type, String serviceCenter, String subject,
-                   Long sentDate, Long receivedDate, Boolean seen, Boolean read) {
+
+    public Message(String adress, String body, String sentDate, String receivedDate, Boolean spam) {
         this.body = body;
+
         this.adress = adress;
-        this.type = type;
-        this.serviceCenter = serviceCenter;
-        this.subject = subject;
         this.sentDate = sentDate;
         this.receivedDate = receivedDate;
-        this.seen = seen;
-        this.read = read;
-        this.id = id;
+        this.spam = spam;
     }
 
     public Message() {
+        this.spam=false;
     }
+
+    // [START post_to_map]
+    @Exclude
+    public Map<String, Object> toMap() {
+        HashMap<String, Object> result = new HashMap<>();
+        result.put("adress", adress);
+        result.put("body", body);
+        result.put("sentDate", sentDate);
+        result.put("receivedDate", receivedDate);
+        result.put("spam", spam);
+
+
+        return result;
+    }
+    // [END post_to_map]
+
 
     public String getBody() {
         return body;
@@ -47,7 +59,6 @@ public class Message {
 
     public void setBody(String body) {
         this.body = body;
-
     }
 
     public String getAdress() {
@@ -58,71 +69,43 @@ public class Message {
         this.adress = adress;
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getServiceCenter() {
-        return serviceCenter;
-    }
-
-    public void setServiceCenter(String serviceCenter) {
-        this.serviceCenter = serviceCenter;
-    }
-
-    public String getSubject() {
-        return subject;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
-    public Long getSentDate() {
+    public String getSentDate() {
         return sentDate;
     }
 
-    public void setSentDate(Long sentDate) {
+    public void setSentDate(String sentDate) {
         this.sentDate = sentDate;
     }
 
-    public Long getReceivedDate() {
+    public String getReceivedDate() {
         return receivedDate;
     }
 
-    public void setReceivedDate(Long receivedDate) {
+    public void setReceivedDate(String receivedDate) {
         this.receivedDate = receivedDate;
-    }
-
-    public Boolean getSeen() {
-        return seen;
-    }
-
-    public void setSeen(Boolean seen) {
-        this.seen = seen;
-    }
-
-    public Boolean getRead() {
-        return read;
-    }
-
-    public void setRead(Boolean read) {
-        this.read = read;
     }
 
     public Boolean getSpam() {
         return spam;
     }
 
-    public int getId() {
-        return id;
+    public void setSpam(Boolean spam) {
+        this.spam = spam;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public String getCancel_number() {
+        return cancel_number;
+    }
+
+    public void setCancel_number(String cancel_number) {
+        this.cancel_number = cancel_number;
+    }
+
+    public String getCancel_phrase() {
+        return cancel_phrase;
+    }
+
+    public void setCancel_phrase(String cancel_phrase) {
+        this.cancel_phrase = cancel_phrase;
     }
 }

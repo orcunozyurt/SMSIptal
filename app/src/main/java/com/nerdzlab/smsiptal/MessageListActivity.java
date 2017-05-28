@@ -1,11 +1,14 @@
 package com.nerdzlab.smsiptal;
 
 
+import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.provider.Telephony;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -13,6 +16,7 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,8 +28,11 @@ import android.net.Uri;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.widget.Toast;
 
 
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.android.volley.AuthFailureError;
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.NetworkResponse;
@@ -35,7 +42,14 @@ import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.github.lzyzsd.circleprogress.DonutProgress;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
+import com.nerdzlab.smsiptal.models.AnalysedMessage;
 import com.nerdzlab.smsiptal.models.GroupedMessage;
 import com.nerdzlab.smsiptal.models.Message;
 import com.nerdzlab.smsiptal.utils.MyApplication;
@@ -108,49 +122,15 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
     private ArrayList<Message> mData = new ArrayList<>();
     private SimpleItemRecyclerViewAdapter mAdapter;
     private LinkedHashMap<String,GroupedMessage> GROUPEDITEMMAP = new LinkedHashMap<>();
-
-    /*public Data<Sms> getSMSData()
-    {
-        TelephonyProvider provider = new TelephonyProvider(getApplicationContext());
-        return provider.getSms(TelephonyProvider.Filter.INBOX);
-    }
-
-    private void displaySmsLog() {
-        Uri allMessages = Uri.parse("content://sms/inbox");
-        //Cursor cursor = managedQuery(allMessages, null, null, null, null); Both are same
-        Cursor cursor = this.getContentResolver().query(allMessages, null,
-                null, null, null);
-
-        while (cursor.moveToNext()) {
-            *//*for (int i = 0; i < cursor.getColumnCount(); i++) {
-
-
-            }*//*
-            if(isSpam(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BODY))));
-            {
-                Log.d( " TEST ",  "--"+cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BODY)));
-                Message msg = new Message();
-                msg.setAdress(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_ADDRESS)));
-                msg.setBody(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BODY)));
-
-
-                mData.add(msg);
-                ITEMMAP.put(msg.getAdress(),msg);
-
-                mAdapter.notifyDataSetChanged();
-
-
-            }
-
-        }
-        cursor.close();
-
-    }*/
+    private static final int PERMISSION_REQUEST_CODE = 1;
+    View recyclerView;
+    private DatabaseReference mDatabase;
 
 
     public Boolean isSpam(String body){
 
 
+        Log.d(TAG, "isSpam: Method Call-");
         Pattern pattern_mersis = Pattern.compile("(\\d{16})");
         Pattern pattern_provider = Pattern.compile("[A-Z][0-9]{3,3}$");
         Matcher matcher_mersis = pattern_mersis.matcher(body);
@@ -171,10 +151,32 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
 
     }
 
+    // [START write_fan_out]
+    private void writeNewMessage(String adress, String body, String sd, String rd) {
+        // Create new post at /user-posts/$userid/$postid and at
+        // /posts/$postid simultaneously
+        String key = mDatabase.child("messages").push().getKey();
+        Message msg = new Message(adress, body, sd, rd,false);
+        Map<String, Object> postValues = msg.toMap();
+
+        Map<String, Object> childUpdates = new HashMap<>();
+        //childUpdates.put("/messages/" + key, postValues);
+        childUpdates.put("/messagesbyadress/" + adress + "/" + key, postValues);
+
+        mDatabase.updateChildren(childUpdates);
+        movetoDetailFragment(adress);
+    }
+    // [END write_fan_out]
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_message_list);
+        Log.d(TAG, "onCreate: ");
+
+        // [START initialize_database_ref]
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+        // [END initialize_database_ref]
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -189,11 +191,58 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
             }
         });
 
-
-
-        View recyclerView = findViewById(R.id.message_list);
+        recyclerView = findViewById(R.id.message_list);
         assert recyclerView != null;
-        setupRecyclerView((RecyclerView) recyclerView);
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+
+
+            if (checkSelfPermission(
+                    Manifest.permission.READ_SMS)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                // Should we show an explanation?
+                if (shouldShowRequestPermissionRationale(
+                        Manifest.permission.READ_SMS)) {
+
+                    // Show an explanation to the user *asynchronously* -- don't block
+                    // this thread waiting for the user's response! After the user
+                    // sees the explanation, try again to request the permission.
+                    new MaterialDialog.Builder(this)
+                            .title(R.string.request_perm)
+                            .content(R.string.content_request_perm)
+                            .positiveText(R.string.agree)
+                            .onAny(new MaterialDialog.SingleButtonCallback() {
+                                @Override
+                                public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                    requestPermissions(
+                                            new String[]{Manifest.permission.READ_SMS},
+                                            PERMISSION_REQUEST_CODE);
+                                }
+                            })
+                            .show();
+
+                } else {
+
+                    // No explanation needed, we can request the permission.
+
+                    requestPermissions(
+                            new String[]{Manifest.permission.READ_SMS},
+                            PERMISSION_REQUEST_CODE);
+
+
+                    // app-defined int constant. The callback method gets the
+                    // result of the request.
+                }
+            }
+        }else{
+
+
+            setupRecyclerView((RecyclerView) recyclerView);
+
+        }
+
+
 
         if (findViewById(R.id.message_detail_container) != null) {
             // The detail container view will be present only in the
@@ -202,18 +251,68 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
             // activity should be in two-pane mode.
             mTwoPane = true;
         }
+
+
+
+
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSION_REQUEST_CODE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // sms-related task you need to do.
+                    setupRecyclerView((RecyclerView) recyclerView);
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                    new MaterialDialog.Builder(this)
+                            .title(R.string.reject)
+                            .content(R.string.content_reject)
+                            .positiveText(R.string.agree)
+                            .show();
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume: ");
+        //getSupportLoaderManager().restartLoader(0, null, this);
+
+
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
     }
 
     private void setupRecyclerView(@NonNull RecyclerView recyclerView) {
         mAdapter = new SimpleItemRecyclerViewAdapter(GROUPEDITEMMAP);
         recyclerView.setAdapter(mAdapter);
-        //displaySmsLog();
-
-        /*GetSMSInboxTask smstask = new GetSMSInboxTask();
-        smstask.execute();*/
+        Log.d(TAG, "setupRecyclerView:: ");
 
         // Simple query to show the most recent SMS messages in the inbox
+        //getSupportLoaderManager().destroyLoader();
         getSupportLoaderManager().initLoader(SmsQuery.TOKEN, null, this);
+
     }
 
     @Override
@@ -232,6 +331,9 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
         if (cursorLoader.getId() == SmsQuery.TOKEN && cursor != null) {
             // Standard swap cursor in when load is done
 
+            ITEMMAP.clear();
+            GROUPEDITEMMAP.clear();
+
             while (cursor.moveToNext()) {
 
                 String body = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BODY));
@@ -242,7 +344,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
                     Message msg = new Message();
                     msg.setAdress(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_ADDRESS)));
                     msg.setBody(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BODY)));
-                    msg.setId(cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_ID)));
+
 
 
 
@@ -282,13 +384,35 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
 
     }
 
+    public void movetoDetailFragment(String adress){
+        if (mTwoPane) {
+            Bundle arguments = new Bundle();
+            arguments.putString(MessageDetailFragment.ARG_ITEM_ID, adress);
+            MessageDetailFragment fragment = new MessageDetailFragment();
+            fragment.setArguments(arguments);
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.message_detail_container, fragment)
+                    .commit();
+        } else {
+            Context context = MessageListActivity.this;
+            Intent intent = new Intent(context, MessageDetailActivity.class);
+            intent.putExtra(MessageDetailFragment.ARG_ITEM_ID, adress);
 
+            context.startActivity(intent);
+        }
+
+    }
 
 
     public class SimpleItemRecyclerViewAdapter
             extends RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder> {
 
-        private final LinkedHashMap<String, GroupedMessage> mValues;
+        private  LinkedHashMap<String, GroupedMessage> mValues;
+
+        public void swapItems(LinkedHashMap<String, GroupedMessage> data) {
+            this.mValues = data;
+            notifyDataSetChanged();
+        }
 
         public SimpleItemRecyclerViewAdapter(LinkedHashMap<String, GroupedMessage> items) {
             mValues = items;
@@ -297,6 +421,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
         public Object getElementByIndex(LinkedHashMap map,int index){
             return map.get( (map.keySet().toArray())[ index ] );
         }
+
 
 
 
@@ -315,6 +440,17 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
             holder.mContentView.setText(""+ holder.mItem.getCount()+" Adet");
             int total = 0;
 
+            Log.d(TAG, "onBindViewHolder: " +
+                    MyApplication.getInstance().isCanceledBefore(holder.mItem.getAdress()) + " " +
+            MyApplication.getInstance().getCanceledSubs());
+
+            if(MyApplication.getInstance().isCanceledBefore(holder.mItem.getAdress()))
+            {
+                holder.mTrash.setImageResource(R.drawable.buttonok);
+            }else {
+                holder.mTrash.setImageResource(R.drawable.trashcan);
+            }
+
             for (int i = 0 ; i < mValues.size();i++){
                 GroupedMessage  item = (GroupedMessage)getElementByIndex(mValues, i);
                 total += item.getCount();
@@ -326,21 +462,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
             holder.mView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (mTwoPane) {
-                        Bundle arguments = new Bundle();
-                        arguments.putString(MessageDetailFragment.ARG_ITEM_ID, holder.mItem.getAdress());
-                        MessageDetailFragment fragment = new MessageDetailFragment();
-                        fragment.setArguments(arguments);
-                        getSupportFragmentManager().beginTransaction()
-                                .replace(R.id.message_detail_container, fragment)
-                                .commit();
-                    } else {
-                        Context context = v.getContext();
-                        Intent intent = new Intent(context, MessageDetailActivity.class);
-                        intent.putExtra(MessageDetailFragment.ARG_ITEM_ID, holder.mItem.getAdress());
-
-                        context.startActivity(intent);
-                    }
+                    movetoDetailFragment(holder.mItem.getAdress());
                 }
             });
 
@@ -350,7 +472,85 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
                 public void onClick(View v) {
                     Log.d(TAG, "onClick: ");
 
-                    askBackendDetails(holder.mItem.getAdress(),ITEMMAP.get(holder.mItem.getAdress()).getBody());
+                    if(MyApplication.getInstance().isCanceledBefore(holder.mItem.getAdress()))
+                    {
+                        movetoDetailFragment(holder.mItem.getAdress());
+
+                    }else{
+
+                        //askBackendDetails(holder.mItem.getAdress(),ITEMMAP.get(holder.mItem.getAdress()).getBody());
+
+                        Query query = mDatabase.child("messagesbyadress")
+                                .child(holder.mItem.getAdress())
+                                .orderByChild("cancel_number");
+
+                        query.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                if (dataSnapshot.exists()) {
+                                    Log.d(TAG, "onDataChange: DATA SNAPSHOT EXITS");
+                                    Boolean matchfound = false;
+                                    Message matchedMessage = null;
+
+                                    for (DataSnapshot savedmessage : dataSnapshot.getChildren()) {
+                                        Message matchCandidate = savedmessage.getValue(Message.class);
+                                        if( matchCandidate.getCancel_number() != null &&
+                                                ITEMMAP.get(holder.mItem.getAdress()).getBody()
+                                                        .contains(matchCandidate.getCancel_number())) {
+
+                                            Log.d(TAG, "DATA MATCHED WITH : "+matchCandidate.getCancel_number());
+                                            matchfound = true;
+                                            matchedMessage = matchCandidate;
+                                            break;
+                                        }
+                                    }
+
+                                    if(matchfound && matchedMessage != null){
+
+                                        if(matchedMessage.getSpam()) {
+                                            sendSMS(matchedMessage.getCancel_number(),
+                                                    matchedMessage.getCancel_phrase(),
+                                                    matchedMessage.getAdress());
+                                        }
+
+
+                                    }
+                                    else {
+
+                                        Log.d(TAG, "NO MATCH CREATING NEW ONE ");
+
+                                        writeNewMessage(holder.mItem.getAdress(),
+                                                ITEMMAP.get(holder.mItem.getAdress()).getBody(),
+                                                ITEMMAP.get(holder.mItem.getAdress()).getSentDate(),
+                                                ITEMMAP.get(holder.mItem.getAdress()).getReceivedDate());
+
+                                    }
+                                }else {
+
+                                    Log.d(TAG, "NO MATCH CREATING NEW ONE ");
+
+                                    writeNewMessage(holder.mItem.getAdress(),
+                                            ITEMMAP.get(holder.mItem.getAdress()).getBody(),
+                                            ITEMMAP.get(holder.mItem.getAdress()).getSentDate(),
+                                            ITEMMAP.get(holder.mItem.getAdress()).getReceivedDate());
+
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+                        });
+
+                        //askFirebaseDetails();
+                        /*writeNewMessage(holder.mItem.getAdress(),
+                                ITEMMAP.get(holder.mItem.getAdress()).getBody(),
+                                ITEMMAP.get(holder.mItem.getAdress()).getSentDate(),
+                                ITEMMAP.get(holder.mItem.getAdress()).getReceivedDate());*/
+
+                    }
+
                 }
             });
         }
@@ -416,7 +616,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
             e.printStackTrace();
         }
         String url = getResources().getString(R.string.url) +"/contents/";
-        Log.i("LOGIN","URL: "+url+" req: "+ obj);
+        Log.i("askBackendDetails","URL: "+url+" req: "+ obj);
 
         final ProgressDialog pDialog = new ProgressDialog(this);
         pDialog.setMessage("Yükleniyor...");
@@ -430,9 +630,19 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
                         pDialog.dismiss();
 
                         Gson gson = new Gson();
-                        /*Authentication authentication =
-                                gson.fromJson(String.valueOf(response),Authentication.class);*/
-                        Log.i(TAG, response.toString());
+                        AnalysedMessage analysedMessage =
+                                gson.fromJson(String.valueOf(response),AnalysedMessage.class);
+
+                        if(analysedMessage.getSms_status() == 1 &&
+                                analysedMessage.getSms_cancel_phrase() != null)
+                        {
+                            sendSMS(analysedMessage.getSms_cancel_number(), analysedMessage.getSms_cancel_phrase(), analysedMessage.getSms_header());
+
+                        }else {
+                            Intent intent = new Intent( Intent.ACTION_VIEW, Uri.parse( "sms:" + analysedMessage.getSms_cancel_number()));
+                            intent.putExtra( "sms_body", "" );
+                            startActivity(intent);
+                        }
 
 
 
@@ -486,6 +696,52 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
         // Adding request to request queue
         MyApplication.getInstance().addToRequestQueue(loginrequest);
 
+    }
+
+    public void sendSMS(String phoneNo, String msg, String deletemessagenumber) {
+        try {
+            SmsManager smsManager = SmsManager.getDefault();
+            smsManager.sendTextMessage(phoneNo, null, msg, null, null);
+            Toast.makeText(getApplicationContext(), "Message Sent",
+                    Toast.LENGTH_LONG).show();
+            MyApplication.getInstance().addCanceled(deletemessagenumber);
+            mAdapter.swapItems(GROUPEDITEMMAP);
+        } catch (Exception ex) {
+            Toast.makeText(getApplicationContext(),ex.getMessage().toString(),
+                    Toast.LENGTH_LONG).show();
+            ex.printStackTrace();
+        }
+    }
+
+    public void deleteSMS(Context context,  String number) {
+        try {
+            Log.d(TAG, "deleteSMS: Deleting SMS from inbox");
+            Uri uriSms = Uri.parse("content://sms/inbox");
+            Cursor c = context.getContentResolver().query(uriSms,
+                    new String[] { "_id", "thread_id", "address",
+                            "person", "date", "body" }, null, null, null);
+
+            if (c != null && c.moveToFirst()) {
+                do {
+                    long id = c.getLong(0);
+                    long threadId = c.getLong(1);
+                    String address = c.getString(2);
+                    String body = c.getString(5);
+
+                    Log.d(TAG, "deleteSMS: "+ address + " - "+ number);
+
+                    if (address.equalsIgnoreCase(number)) {
+                        Log.d(TAG,"Deleting SMS with id: " + threadId);
+                        context.getContentResolver().delete(
+                                Uri.parse("content://sms/" + id), null, null);
+
+                        mAdapter.notifyDataSetChanged();
+                    }
+                } while (c.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.d(TAG,"Could not delete SMS from inbox: " + e.getMessage());
+        }
     }
 
 }
