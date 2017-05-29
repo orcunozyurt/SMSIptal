@@ -14,7 +14,7 @@ public class GroupedMessage {
     public GroupedMessage(ArrayList<Message> messages, int count, String adress) {
         this.messages = messages;
         this.count = count;
-        this.adress = adress;
+        this.adress = adress.replaceAll("[^A-Za-z0-9]", "");;
     }
 
     public GroupedMessage() {

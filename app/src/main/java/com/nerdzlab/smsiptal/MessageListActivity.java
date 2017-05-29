@@ -159,6 +159,8 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
         Message msg = new Message(adress, body, sd, rd,false);
         Map<String, Object> postValues = msg.toMap();
 
+        adress = adress.replaceAll("[^A-Za-z0-9]", "");
+
         Map<String, Object> childUpdates = new HashMap<>();
         //childUpdates.put("/messages/" + key, postValues);
         childUpdates.put("/messagesbyadress/" + adress + "/" + key, postValues);
@@ -234,6 +236,8 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
                     // app-defined int constant. The callback method gets the
                     // result of the request.
                 }
+            }else {
+                setupRecyclerView((RecyclerView) recyclerView);
             }
         }else{
 
@@ -293,6 +297,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
     protected void onResume() {
         super.onResume();
         Log.d(TAG, "onResume: ");
+        //mAdapter.swapItems(GROUPEDITEMMAP);
         //getSupportLoaderManager().restartLoader(0, null, this);
 
 

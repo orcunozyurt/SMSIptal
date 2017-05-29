@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <uses-permission android:name="android.permission.RECEIVE_SMS"></uses-permission>
+
     <application
         android:name=".utils.MyApplication"
         android:allowBackup="true"
@@ -33,6 +35,14 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.nerdzlab.smsiptal.MessageListActivity" />
         </activity>
+
+        <receiver android:name=".utils.SmsReceiver"
+            android:enabled="true"
+            >
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

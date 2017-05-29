@@ -27,7 +27,7 @@ public class Message {
     public Message(String adress, String body, String sentDate, String receivedDate, Boolean spam) {
         this.body = body;
 
-        this.adress = adress;
+        this.adress = adress.replaceAll("[^A-Za-z0-9]", "");
         this.sentDate = sentDate;
         this.receivedDate = receivedDate;
         this.spam = spam;
@@ -66,7 +66,7 @@ public class Message {
     }
 
     public void setAdress(String adress) {
-        this.adress = adress;
+        this.adress = adress.replaceAll("[^A-Za-z0-9]", "");;
     }
 
     public String getSentDate() {
