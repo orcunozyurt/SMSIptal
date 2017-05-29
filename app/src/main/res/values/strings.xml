@@ -12,4 +12,25 @@
     <string name="trashdesc">Cop kutusuna tikla, ve kampanya iptal mesaji gonderilsin.</string>
     <string name="okdesc">Bu isareti goruyorsan, bu kampanya onceden iptal edilmis.</string>
     <string name="spydesc">Merhaba, ben izinsiz sms iptal robotun, simdi</string>
+
+
+
+    <string name="next">SONRA</string>
+    <string name="skip">ATLA</string>
+    <string name="start">ANLADIM</string>
+
+    <string name="slide_1_title">Izinsiz SMS\'e Son!</string>
+    <string name="slide_1_desc">Istenmeyen kampanya mesajlarindan kurtulmanizi biraz daha kolaylastiralim istedik :)</string>
+
+    <string name="slide_2_title">Hizli Aksiyon :)</string>
+    <string name="slide_2_desc">Eger ilgili SMS veritabanimizda ise tek tikla IPTAL sms\'inizi gonderiyoruz. </string>
+
+    <string name="slide_3_title">Daha Az Hizli Aksiyon :(</string>
+    <string name="slide_3_desc">Eger ilgili SMS veritabanimizda yok ise, sizi yonlendirdigimiz Mesaj Kutusundan IPTAL sms\'i atiyorsunuz ve biz bu sirada bu sms\'i veritabanimiza ekliyoruz.</string>
+
+    <string name="slide_4_title">SMS Okuma</string>
+    <string name="slide_4_desc">Tum bunlari yapabilmek icin SMS okuma iznine ihtiyac duyuyoruz. Bir sonraki adimda sorulursa, izninizi rica ederiz. Daha sonrasinda iptal edebilirsiniz ;)</string>
+
+    <string name="play_again_desc"></string>
+    <string name="play_again">Yeniden Goster</string>
 </resources>
