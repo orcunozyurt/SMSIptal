@@ -19,6 +19,8 @@ import android.support.design.widget.Snackbar;
 import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -65,6 +67,13 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
+import io.branch.indexing.BranchUniversalObject;
+import io.branch.referral.Branch;
+import io.branch.referral.BranchError;
+import io.branch.referral.SharingHelper;
+import io.branch.referral.util.LinkProperties;
+import io.branch.referral.util.ShareSheetStyle;
 
 import static com.nerdzlab.smsiptal.models.Message.ITEMMAP;
 
@@ -125,6 +134,58 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
     private static final int PERMISSION_REQUEST_CODE = 1;
     View recyclerView;
     private DatabaseReference mDatabase;
+    BranchUniversalObject branchUniversalObject;
+
+
+    // This would be your own method where you've loaded the content for this page
+    void contentLoaded() {
+        // Initialize a Branch Universal Object for the page the user is viewing
+        branchUniversalObject = new BranchUniversalObject()
+                .setCanonicalIdentifier("item_id_12345")
+                .setTitle("My Content Title")
+                .setContentDescription("Check out this awesome piece of content")
+                .setContentImageUrl("https://example.com/mycontent-12345.png")
+                .addContentMetadata("item_id", "12345")
+                .addContentMetadata("user_id", "678910");
+
+        // Trigger a view on the content for analytics tracking
+        branchUniversalObject.registerView();
+
+        // List on Google App Indexing
+        branchUniversalObject.listOnGoogleSearch(this);
+    }
+
+    // This is the function to handle sharing when a user clicks the share button
+    void initiateSharing() {
+        // Create your link properties
+        // More link properties available at https://dev.branch.io/getting-started/configuring-links/guide/#link-control-parameters
+        LinkProperties linkProperties = new LinkProperties()
+                .setFeature("sharing");
+
+        // Customize the appearance of your share sheet
+        ShareSheetStyle shareSheetStyle = new ShareSheetStyle(this, "Check this out!", "Hey friend - I know you'll love this: ")
+                .setCopyUrlStyle(getResources().getDrawable(android.R.drawable.ic_menu_send), "Copy link", "Link added to clipboard!")
+                .setMoreOptionStyle(getResources().getDrawable(android.R.drawable.ic_menu_search), "Show more")
+                .addPreferredSharingOption(SharingHelper.SHARE_WITH.FACEBOOK)
+                .addPreferredSharingOption(SharingHelper.SHARE_WITH.EMAIL)
+                .addPreferredSharingOption(SharingHelper.SHARE_WITH.MESSAGE)
+                .addPreferredSharingOption(SharingHelper.SHARE_WITH.TWITTER);
+
+        // Show the share sheet for the content you want the user to share. A link will be automatically created and put in the message.
+        branchUniversalObject.showShareSheet(this, linkProperties, shareSheetStyle, new Branch.BranchLinkShareListener() {
+            @Override
+            public void onShareLinkDialogLaunched() { }
+            @Override
+            public void onShareLinkDialogDismissed() { }
+            @Override
+            public void onChannelSelected(String channelName) { }
+            @Override
+            public void onLinkShareResponse(String sharedLink, String sharedChannel, BranchError error) {
+                // The link will be available in sharedLink
+            }
+        });
+    }
+
 
 
     public Boolean isSpam(String body){
@@ -183,6 +244,9 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setTitle(getTitle());
+
+        contentLoaded();
+
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -269,6 +333,31 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate menu resource file.
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+
+        return super.onCreateOptionsMenu(menu);
+
+    }
+
+    @Override
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()) {
+
+            case R.id.menu_item_share:
+
+                initiateSharing();
+
+                break;
+
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
         switch (requestCode) {
@@ -298,6 +387,26 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
             // permissions this app might request
         }
     }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Branch branch = Branch.getInstance();
+        branch.initSession(new Branch.BranchUniversalReferralInitListener() {
+            @Override
+            public void onInitFinished(BranchUniversalObject branchUniversalObject, LinkProperties linkProperties, BranchError error) {
+                if (error == null && branchUniversalObject != null) {
+                    // This code will execute when your app is opened from a Branch deep link, which
+                    // means that you can route to a custom activity depending on what they clicked.
+                    // In this example, we'll just print out the data from the link that was clicked.
+
+                    Log.i("BranchTestBed", "title " + branchUniversalObject.getTitle());
+                    Log.i("ContentMetaData", "metadata " + branchUniversalObject.getMetadata());
+                }
+            }
+        }, this.getIntent().getData(), this);
+    }
+
 
     @Override
     protected void onResume() {
@@ -614,101 +723,6 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
 
 
 
-    public void askBackendDetails(String sms_header, String sms_content){
-
-
-
-        JSONObject obj = new JSONObject();
-
-        try {
-            obj.put("sms_header", sms_header);
-            obj.put("sms_content", sms_content);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        String url = getResources().getString(R.string.url) +"/contents/";
-        Log.i("askBackendDetails","URL: "+url+" req: "+ obj);
-
-        final ProgressDialog pDialog = new ProgressDialog(this);
-        pDialog.setMessage("Yükleniyor...");
-        pDialog.show();
-        JsonObjectRequest loginrequest = new JsonObjectRequest(Request.Method.POST,url,obj,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        System.out.println(response);
-                        pDialog.hide();
-                        pDialog.dismiss();
-
-                        Gson gson = new Gson();
-                        AnalysedMessage analysedMessage =
-                                gson.fromJson(String.valueOf(response),AnalysedMessage.class);
-
-                        if(analysedMessage.getSms_status() == 1 &&
-                                analysedMessage.getSms_cancel_phrase() != null)
-                        {
-                            sendSMS(analysedMessage.getSms_cancel_number(), analysedMessage.getSms_cancel_phrase(), analysedMessage.getSms_header());
-
-                        }else {
-                            Intent intent = new Intent( Intent.ACTION_VIEW, Uri.parse( "sms:" + analysedMessage.getSms_cancel_number()));
-                            intent.putExtra( "sms_body", "" );
-                            startActivity(intent);
-                        }
-
-
-
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        pDialog.hide();
-                        pDialog.dismiss();
-                        NetworkResponse response = error.networkResponse;
-                        if(response != null && response.data != null){
-                            Log.d(TAG, "onErrorResponse: " + new String(response.data));
-                            //Additional cases
-                        }
-                        VolleyLog.d("RESPONSE", "Error: " + error);
-                        View view = findViewById(android.R.id.content);
-                        Snackbar.make(view, "Bir Hata Oluştu.", Snackbar.LENGTH_LONG)
-                                .setAction("Action", null).show();
-                        //ShowErrorMessage(context);
-
-                        /*MyApplication.getInstance().setAccessToken("");
-
-                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                        startActivity(intent);
-                        finish();*/
-                    }
-                }) {
-            /**
-             * Passing some request headers
-             * */
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                HashMap<String, String> headers = new HashMap<String, String>();
-                headers.put("Content-Type", "application/json");
-                //headers.put("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NTU1NjQ1MzV9.uziTJmdCjxXKi6pLHh3OsSJXmlQyS7Izf7sT-kD3CHU");
-                return headers;
-            }
-            @Override
-            protected Response<JSONObject> parseNetworkResponse(NetworkResponse response) {
-                Log.d("PARSEERROR", " PARSE ERROR" + response.statusCode);
-                mStatusCode = response.statusCode;
-                return super.parseNetworkResponse(response);
-            }
-        };
-        loginrequest.setRetryPolicy(new DefaultRetryPolicy(
-                10000,
-                0,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
-
-        // Adding request to request queue
-        MyApplication.getInstance().addToRequestQueue(loginrequest);
-
-    }
-
     public void sendSMS(String phoneNo, String msg, String deletemessagenumber) {
         try {
             SmsManager smsManager = SmsManager.getDefault();
@@ -724,35 +738,5 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
         }
     }
 
-    public void deleteSMS(Context context,  String number) {
-        try {
-            Log.d(TAG, "deleteSMS: Deleting SMS from inbox");
-            Uri uriSms = Uri.parse("content://sms/inbox");
-            Cursor c = context.getContentResolver().query(uriSms,
-                    new String[] { "_id", "thread_id", "address",
-                            "person", "date", "body" }, null, null, null);
-
-            if (c != null && c.moveToFirst()) {
-                do {
-                    long id = c.getLong(0);
-                    long threadId = c.getLong(1);
-                    String address = c.getString(2);
-                    String body = c.getString(5);
-
-                    Log.d(TAG, "deleteSMS: "+ address + " - "+ number);
-
-                    if (address.equalsIgnoreCase(number)) {
-                        Log.d(TAG,"Deleting SMS with id: " + threadId);
-                        context.getContentResolver().delete(
-                                Uri.parse("content://sms/" + id), null, null);
-
-                        mAdapter.notifyDataSetChanged();
-                    }
-                } while (c.moveToNext());
-            }
-        } catch (Exception e) {
-            Log.d(TAG,"Could not delete SMS from inbox: " + e.getMessage());
-        }
-    }
 
 }

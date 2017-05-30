@@ -98,6 +98,9 @@
 
             <include layout="@layout/message_list" />
         </FrameLayout>
+
+
+
     </RelativeLayout>
 
 

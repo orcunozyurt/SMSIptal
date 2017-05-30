@@ -19,7 +19,15 @@
         <activity
             android:name=".MessageListActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar">
+            <intent-filter>
+                <data android:scheme="sampleuri"/>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+            </intent-filter>
+
+        </activity>
         <activity
             android:name=".MessageDetailActivity"
             android:label="@string/title_message_detail"
@@ -51,6 +59,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="5602febd5ad2cdfc96750dd14e8e52d15fd05177" />
     </application>
 
 </manifest>
