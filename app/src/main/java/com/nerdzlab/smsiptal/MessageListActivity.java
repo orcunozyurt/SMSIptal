@@ -188,8 +188,14 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                /*Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();*/
+
+                new MaterialDialog.Builder(view.getContext())
+                        .title(R.string.info_title)
+                        .content(R.string.info_content)
+                        .positiveText(R.string.agree)
+                        .show();
             }
         });
 

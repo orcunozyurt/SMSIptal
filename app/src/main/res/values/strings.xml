@@ -14,7 +14,6 @@
     <string name="spydesc">Merhaba, ben izinsiz sms iptal robotun, simdi</string>
 
 
-
     <string name="next">SONRA</string>
     <string name="skip">ATLA</string>
     <string name="start">ANLADIM</string>
@@ -33,4 +32,11 @@
 
     <string name="play_again_desc"></string>
     <string name="play_again">Yeniden Goster</string>
+    <string name="info_title">Kısa Kısa Bilgiler :)</string>
+    <string name="info_content">\u2022Bu ekranda liste ile gördüğünüz mesajlar, uygulamamızın kampanya SMSi olarak sınıflandırdığı mesajlarınızdır.\n
+    \u2022Listelenmiş mesajların her birinin en sol tarafında, o mesajı gönderenin yüzdesel olarak gelen kutunuzdaki SMSlere oranını görebilirsiniz.\n
+    \u2022Mesajların yanındaki çöp kutusuna tıklayarak ilgili mesajın iptalini sağlayabilirsiniz.\n
+    \u2022Mesaj 2 farklı şekilde iptal edilebilir, çöp kutusuna tıkladığınız zaman uygulama mesajın veri tabanımızda olup olmadığını sorgular.Eğer bu firmanın iptal kelimesi ve numarası var ise, Bu bilgilerle SMSi gönderir.\n
+    \u2022Eğer yok ise size bu firmaya ait bir SMS ile yeni bir ekran açılır. Bu ekranda yazan iptal kelimesi ve numarasını gördükten sonra ekrandaki mesaj butonuna basarak, İptal mesajını sizin atabilmeniz sağlanır.\n
+    \u2022Bu sırada ilgili mesaj veritabanımıza iletilir ve sonraki sorgulara hazır hale getirilir.</string>
 </resources>

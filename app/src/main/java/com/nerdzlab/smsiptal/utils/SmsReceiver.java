@@ -77,9 +77,26 @@ public class SmsReceiver extends BroadcastReceiver {
                         .setPriority(Notification.PRIORITY_HIGH)
                         .setAutoCancel(true)
                         .addAction(R.drawable.logo_no_background, "Hemen Hallet", pIntent)
-                        .setContentText("Az önce SMS gönderen -"+msgadress+" sizi rahatsız mı ediyor? Hemen halledebirim ;)");
+                        .setContentText("Az önce SMS gönderen "+msgadress+" sizi rahatsız mı ediyor? Hemen halledebilirim ;)");
 
         mBuilder.setSound(alarmSound);
+
+        NotificationCompat.InboxStyle inboxStyle =
+                new NotificationCompat.InboxStyle();
+        String[] events = new String[6];
+        events[0] = "Az önce size SMS gönderen "+msgadress+" ";
+        events[1] = "sizi rahatsız mı ediyor? Hemen halledebilirim ;)";
+
+        // Sets a title for the Inbox in expanded layout
+        inboxStyle.setBigContentTitle("Kampanya Mesajı");
+
+        // Moves events into the expanded layout
+        for (int i=0; i < events.length; i++) {
+
+            inboxStyle.addLine(events[i]);
+        }
+        // Moves the expanded layout object into the notification object.
+        mBuilder.setStyle(inboxStyle);
 
 
         final NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
