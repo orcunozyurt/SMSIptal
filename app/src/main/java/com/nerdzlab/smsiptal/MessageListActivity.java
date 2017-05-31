@@ -213,21 +213,37 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
     }
 
     // [START write_fan_out]
-    private void writeNewMessage(String adress, String body, String sd, String rd) {
-        // Create new post at /user-posts/$userid/$postid and at
-        // /posts/$postid simultaneously
-        String key = mDatabase.child("messages").push().getKey();
-        Message msg = new Message(adress, body, sd, rd,false);
-        Map<String, Object> postValues = msg.toMap();
+    private void writeNewMessage(String adress, String body, String sd, String rd, Boolean sendnow) {
 
-        adress = adress.replaceAll("[^A-Za-z0-9]", "");
+        if(sendnow)
+        {
+            String key = mDatabase.child("messages").push().getKey();
+            Message msg = new Message(adress, body, sd, rd,false);
+            Map<String, Object> postValues = msg.toMap();
 
-        Map<String, Object> childUpdates = new HashMap<>();
-        //childUpdates.put("/messages/" + key, postValues);
-        childUpdates.put("/messagesbyadress/" + adress + "/" + key, postValues);
+            adress = adress.replaceAll("[^A-Za-z0-9]", "");
 
-        mDatabase.updateChildren(childUpdates);
-        movetoDetailFragment(adress);
+            Map<String, Object> childUpdates = new HashMap<>();
+            //childUpdates.put("/messages/" + key, postValues);
+            childUpdates.put("/messagesbyadress/" + adress + "/" + key, postValues);
+
+            mDatabase.updateChildren(childUpdates);
+
+        }
+
+        final String finalAdress = adress;
+        MaterialDialog dialog = new MaterialDialog.Builder(this)
+                .title(R.string.write_new_title)
+                .content(R.string.write_new_content)
+                .positiveText(R.string.agree)
+                .onPositive(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                        movetoDetailFragment(finalAdress);
+                    }
+                })
+                .show();
+
     }
     // [END write_fan_out]
 
@@ -265,6 +281,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
 
         recyclerView = findViewById(R.id.message_list);
         assert recyclerView != null;
+
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
 
@@ -611,6 +628,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
                                     Log.d(TAG, "onDataChange: DATA SNAPSHOT EXITS");
                                     Boolean matchfound = false;
                                     Message matchedMessage = null;
+                                    Message matchedButNotProcessedMessage = null;
 
                                     for (DataSnapshot savedmessage : dataSnapshot.getChildren()) {
                                         Message matchCandidate = savedmessage.getValue(Message.class);
@@ -622,6 +640,10 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
                                             matchfound = true;
                                             matchedMessage = matchCandidate;
                                             break;
+                                        }else if( matchCandidate.getBody().equalsIgnoreCase(ITEMMAP.get(holder.mItem.getAdress()).getBody()) &&
+                                                matchCandidate.getSpam() == false){
+                                            matchedButNotProcessedMessage = matchCandidate;
+
                                         }
                                     }
 
@@ -637,12 +659,25 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
                                     }
                                     else {
 
-                                        Log.d(TAG, "NO MATCH CREATING NEW ONE ");
+                                        Log.d(TAG, "NO MATCH CREATING NEW ONE IF NOT THERE ALRADY ");
 
-                                        writeNewMessage(holder.mItem.getAdress(),
-                                                ITEMMAP.get(holder.mItem.getAdress()).getBody(),
-                                                ITEMMAP.get(holder.mItem.getAdress()).getSentDate(),
-                                                ITEMMAP.get(holder.mItem.getAdress()).getReceivedDate());
+                                        if(matchedButNotProcessedMessage == null)
+                                        {
+                                            writeNewMessage(holder.mItem.getAdress(),
+                                                    ITEMMAP.get(holder.mItem.getAdress()).getBody(),
+                                                    ITEMMAP.get(holder.mItem.getAdress()).getSentDate(),
+                                                    ITEMMAP.get(holder.mItem.getAdress()).getReceivedDate(),true);
+
+                                        }else{
+                                            writeNewMessage(holder.mItem.getAdress(),
+                                                    ITEMMAP.get(holder.mItem.getAdress()).getBody(),
+                                                    ITEMMAP.get(holder.mItem.getAdress()).getSentDate(),
+                                                    ITEMMAP.get(holder.mItem.getAdress()).getReceivedDate(),false);
+
+                                        }
+
+
+
 
                                     }
                                 }else {
@@ -652,7 +687,8 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
                                     writeNewMessage(holder.mItem.getAdress(),
                                             ITEMMAP.get(holder.mItem.getAdress()).getBody(),
                                             ITEMMAP.get(holder.mItem.getAdress()).getSentDate(),
-                                            ITEMMAP.get(holder.mItem.getAdress()).getReceivedDate());
+                                            ITEMMAP.get(holder.mItem.getAdress()).getReceivedDate(),
+                                            true);
 
                                 }
                             }

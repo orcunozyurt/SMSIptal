@@ -40,4 +40,6 @@
     \u2022Eğer yok ise size bu firmaya ait bir SMS ile yeni bir ekran açılır. Bu ekranda yazan iptal kelimesi ve numarasını gördükten sonra ekrandaki mesaj butonuna basarak, İptal mesajını sizin atabilmeniz sağlanır.\n
     \u2022Bu sırada ilgili mesaj veritabanımıza iletilir ve sonraki sorgulara hazır hale getirilir.</string>
     <string name="io.branch.apiKey" translatable="false">key_live_ikwBKmuURyvPHB0ABUvCucipyEc4djMY</string>
+    <string name="write_new_title">Veritabanımızda yok :(</string>
+    <string name="write_new_content">Bu kampanya SMSi henüz veritabanımızda yok.\nDolayısıyla bu mesajı sizin yerinize gönderemiyoruz.Açılacak ekranda mesajın iptal kelimesi ve numarasını görerek gönderebilirsiniz.\nBiz de bu arada bu mesajı veritabanımıza ekliyor olacağız ;)</string>
 </resources>

@@ -6,8 +6,8 @@
     android:name="com.nerdzlab.smsiptal.MessageListFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginLeft="16dp"
-    android:layout_marginRight="16dp"
+    android:layout_marginLeft="8dp"
+    android:layout_marginRight="8dp"
     app:layoutManager="LinearLayoutManager"
     tools:context="com.nerdzlab.smsiptal.MessageListActivity"
     tools:listitem="@layout/message_list_content" />
