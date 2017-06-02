@@ -42,4 +42,6 @@
     <string name="io.branch.apiKey" translatable="false">key_live_ikwBKmuURyvPHB0ABUvCucipyEc4djMY</string>
     <string name="write_new_title">Veritabanımızda yok :(</string>
     <string name="write_new_content">Bu kampanya SMSi henüz veritabanımızda yok.\nDolayısıyla bu mesajı sizin yerinize gönderemiyoruz.Açılacak ekranda mesajın iptal kelimesi ve numarasını görerek gönderebilirsiniz.\nBiz de bu arada bu mesajı veritabanımıza ekliyor olacağız ;)</string>
+    <string name="progress_dialog">İşlem Yapılıyor</string>
+    <string name="please_wait">Lütfen Bekleyin</string>
 </resources>

@@ -140,13 +140,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
     // This would be your own method where you've loaded the content for this page
     void contentLoaded() {
         // Initialize a Branch Universal Object for the page the user is viewing
-        branchUniversalObject = new BranchUniversalObject()
-                .setCanonicalIdentifier("item_id_12345")
-                .setTitle("My Content Title")
-                .setContentDescription("Check out this awesome piece of content")
-                .setContentImageUrl("https://example.com/mycontent-12345.png")
-                .addContentMetadata("item_id", "12345")
-                .addContentMetadata("user_id", "678910");
+        branchUniversalObject = new BranchUniversalObject();
 
         // Trigger a view on the content for analytics tracking
         branchUniversalObject.registerView();
@@ -157,15 +151,14 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
 
     // This is the function to handle sharing when a user clicks the share button
     void initiateSharing() {
-        // Create your link properties
-        // More link properties available at https://dev.branch.io/getting-started/configuring-links/guide/#link-control-parameters
+
         LinkProperties linkProperties = new LinkProperties()
                 .setFeature("sharing");
 
         // Customize the appearance of your share sheet
-        ShareSheetStyle shareSheetStyle = new ShareSheetStyle(this, "Check this out!", "Hey friend - I know you'll love this: ")
-                .setCopyUrlStyle(getResources().getDrawable(android.R.drawable.ic_menu_send), "Copy link", "Link added to clipboard!")
-                .setMoreOptionStyle(getResources().getDrawable(android.R.drawable.ic_menu_search), "Show more")
+        ShareSheetStyle shareSheetStyle = new ShareSheetStyle(this, "SMS Iptal", "Kampanya SMS İzinlerini İptal Edin: ")
+                .setCopyUrlStyle(getResources().getDrawable(android.R.drawable.ic_menu_send), "Link kopyala", "Link kopyalandı!")
+                .setMoreOptionStyle(getResources().getDrawable(android.R.drawable.ic_menu_search), "Daha Fazla")
                 .addPreferredSharingOption(SharingHelper.SHARE_WITH.FACEBOOK)
                 .addPreferredSharingOption(SharingHelper.SHARE_WITH.EMAIL)
                 .addPreferredSharingOption(SharingHelper.SHARE_WITH.MESSAGE)
@@ -187,6 +180,9 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
     }
 
 
+    /*
+     * isSpam method makes regex check for common unwanted SMS templates
+     */
 
     public Boolean isSpam(String body){
 
@@ -212,7 +208,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
 
     }
 
-    // [START write_fan_out]
+    // Updates FB with the message content if not in DB Before
     private void writeNewMessage(String adress, String body, String sd, String rd, Boolean sendnow) {
 
         if(sendnow)
@@ -245,7 +241,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
                 .show();
 
     }
-    // [END write_fan_out]
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -284,6 +280,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
 
 
 
+        //Permission Handling above SDK M
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
 
@@ -617,7 +614,12 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
 
                     }else{
 
-                        //askBackendDetails(holder.mItem.getAdress(),ITEMMAP.get(holder.mItem.getAdress()).getBody());
+
+                        final MaterialDialog md = new MaterialDialog.Builder(v.getContext())
+                                .title(R.string.progress_dialog)
+                                .content(R.string.please_wait)
+                                .progress(true, 0)
+                                .show();
 
                         Query query = mDatabase.child("messagesbyadress")
                                 .child(holder.mItem.getAdress())
@@ -627,6 +629,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
                             @Override
                             public void onDataChange(DataSnapshot dataSnapshot) {
                                 if (dataSnapshot.exists()) {
+
                                     Log.d(TAG, "onDataChange: DATA SNAPSHOT EXITS");
                                     Boolean matchfound = false;
                                     Message matchedMessage = null;
@@ -648,6 +651,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
 
                                         }
                                     }
+                                    md.dismiss();
 
                                     if(matchfound && matchedMessage != null){
 
@@ -661,7 +665,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
                                     }
                                     else {
 
-                                        Log.d(TAG, "NO MATCH CREATING NEW ONE IF NOT THERE ALRADY ");
+                                        Log.d(TAG, "NO MATCH CREATING NEW ONE IF NOT THERE ALREADY ");
 
                                         if(matchedButNotProcessedMessage == null)
                                         {
@@ -682,7 +686,9 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
 
 
                                     }
+
                                 }else {
+                                    md.dismiss();
 
                                     Log.d(TAG, "NO MATCH CREATING NEW ONE ");
 

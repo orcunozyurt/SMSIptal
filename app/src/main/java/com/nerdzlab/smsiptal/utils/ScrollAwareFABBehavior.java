@@ -11,6 +11,9 @@ import android.view.View;
 /**
  * Created by orcunozyurt on 6/2/17.
  */
+/*
+ * Simply hides or shows FAB based on scroll direction to create space for the receyclerview action button
+ */
 
 public class ScrollAwareFABBehavior extends CoordinatorLayout.Behavior<FloatingActionButton>  {
     public ScrollAwareFABBehavior(Context context, AttributeSet attrs) {
