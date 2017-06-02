@@ -32,7 +32,6 @@ public class ScrollAwareFABBehavior extends CoordinatorLayout.Behavior<FloatingA
                                final View target, final int dxConsumed, final int dyConsumed,
                                final int dxUnconsumed, final int dyUnconsumed) {
         super.onNestedScroll(coordinatorLayout, child, target, dxConsumed, dyConsumed,dxUnconsumed, dyUnconsumed);
-        Log.d("ScrollAwareFABBehavior", "onNestedScroll: "+dyUnconsumed);
         if (dyConsumed > 0 && child.getVisibility() == View.VISIBLE) {
             child.hide(new FloatingActionButton.OnVisibilityChangedListener() {
                 @Override
