@@ -283,6 +283,8 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
         assert recyclerView != null;
 
 
+
+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
 
 

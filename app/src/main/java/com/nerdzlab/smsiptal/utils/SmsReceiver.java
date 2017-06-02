@@ -22,7 +22,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Created by btdays on 5/29/17.
+ * Created by orcunozyurt on 5/29/17.
  */
 
 public class SmsReceiver extends BroadcastReceiver {
