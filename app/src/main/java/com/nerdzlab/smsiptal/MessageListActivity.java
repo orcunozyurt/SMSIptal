@@ -156,7 +156,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
                 .setFeature("sharing");
 
         // Customize the appearance of your share sheet
-        ShareSheetStyle shareSheetStyle = new ShareSheetStyle(this, "SMS Iptal", "Kampanya SMS İzinlerini İptal Edin: ")
+        ShareSheetStyle shareSheetStyle = new ShareSheetStyle(this, "SMS Iptal", "Kampanya SMS İzinlerini İptal Etmenin Kolay Yolu: ")
                 .setCopyUrlStyle(getResources().getDrawable(android.R.drawable.ic_menu_send), "Link kopyala", "Link kopyalandı!")
                 .setMoreOptionStyle(getResources().getDrawable(android.R.drawable.ic_menu_search), "Daha Fazla")
                 .addPreferredSharingOption(SharingHelper.SHARE_WITH.FACEBOOK)
@@ -195,7 +195,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
 
         //Log.d(TAG, "isSpam: "+ matcher_mersis.find()+ " " + matcher_provider.find());
         if ((matcher_mersis.find() && matcher_provider.find())|| body.contains("Mersis") ||
-                body.contains("mersis")) {
+                body.contains("mersis") || body.contains("MERSIS")) {
             matcher_mersis.reset();
             matcher_provider.reset();
             return true;
