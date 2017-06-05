@@ -125,7 +125,7 @@ public class SmsReceiver extends BroadcastReceiver {
 
         //Log.d(TAG, "isSpam: "+ matcher_mersis.find()+ " " + matcher_provider.find());
         if ((matcher_mersis.find() && matcher_provider.find())|| body.contains("Mersis") ||
-                body.contains("mersis")) {
+                body.contains("mersis") || body.contains("MERSIS")) {
             matcher_mersis.reset();
             matcher_provider.reset();
             Log.d(TAG, "isSpam: true");
