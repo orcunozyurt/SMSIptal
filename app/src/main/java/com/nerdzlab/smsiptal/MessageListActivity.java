@@ -44,6 +44,11 @@ import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.github.lzyzsd.circleprogress.DonutProgress;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -135,6 +140,8 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
     View recyclerView;
     private DatabaseReference mDatabase;
     BranchUniversalObject branchUniversalObject;
+    private FirebaseAuth mAuth;
+    FirebaseUser currentUser;
 
 
     // This would be your own method where you've loaded the content for this page
@@ -250,6 +257,7 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
         Log.d(TAG, "onCreate: ");
 
         // [START initialize_database_ref]
+        mAuth = FirebaseAuth.getInstance();
         mDatabase = FirebaseDatabase.getInstance().getReference();
         // [END initialize_database_ref]
 
@@ -348,6 +356,8 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
 
     }
 
+
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate menu resource file.
@@ -407,6 +417,30 @@ public class MessageListActivity extends AppCompatActivity implements  LoaderCal
     @Override
     protected void onStart() {
         super.onStart();
+        // Check if user is signed in (non-null) and update UI accordingly.
+        currentUser = mAuth.getCurrentUser();
+        if(currentUser == null){
+            mAuth.signInAnonymously()
+                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            if (task.isSuccessful()) {
+                                // Sign in success, update UI with the signed-in user's information
+                                Log.d(TAG, "signInAnonymously:success");
+                                currentUser = mAuth.getCurrentUser();
+
+                            } else {
+                                // If sign in fails, display a message to the user.
+                                Log.w(TAG, "signInAnonymously:failure", task.getException());
+                                Toast.makeText(MessageListActivity.this, "Authentication failed.",
+                                        Toast.LENGTH_SHORT).show();
+
+                            }
+
+                            // ...
+                        }
+                    });
+        }
         Branch branch = Branch.getInstance();
         branch.initSession(new Branch.BranchUniversalReferralInitListener() {
             @Override
